@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+
+const express = require("express");
+const http = require("http");
+const path = require("path");
+
+// Create Express app
+const app = express();
+
+// Middleware
+app.use(express.static(path.join(__dirname, "..", "public")));
+app.use(express.json());
+
+// Basic route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "views", "index.html"));
+});
+
+// Stats API route
+app.get("/api/stats", (req, res) => {
+  res.json({
+    activeConnections: 0,
+    totalMessages: 0,
+    activeRooms: 0,
+    uptime: process.uptime(),
+  });
+});
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Setup Socket.io
+const socketIo = require("socket.io");
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// Simple in-memory storage
+const users = new Map();
+const messages = [];
+let connectionCount = 0;
+
+// Socket.io events
+io.on("connection", (socket) => {
+  console.log(`New connection: ${socket.id}`);
+  connectionCount++;
+
+  socket.on("join", (data) => {
+    const { username, room = "general" } = data;
+    console.log(`${username} joining ${room}`);
+
+    users.set(socket.id, { username, room });
+    socket.join(room);
+
+    socket.to(room).emit("userJoined", {
+      username,
+      message: `${username} joined the chat`,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Send room users
+    const roomUsers = Array.from(users.values())
+      .filter((user) => user.room === room)
+      .map((user) => user.username);
+
+    io.to(room).emit("roomUsers", roomUsers);
+  });
+
+  socket.on("message", (data) => {
+    const user = users.get(socket.id);
+    if (!user) return;
+
+    const message = {
+      id: Date.now() + Math.random(),
+      username: user.username,
+      message: data.message,
+      room: user.room,
+      timestamp: new Date().toISOString(),
+    };
+
+    messages.push(message);
+    io.to(user.room).emit("message", message);
+  });
+
+  socket.on("typing", (isTyping) => {
+    const user = users.get(socket.id);
+    if (!user) return;
+
+    socket.to(user.room).emit("userTyping", {
+      username: user.username,
+      isTyping,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    const user = users.get(socket.id);
+    if (user) {
+      socket.to(user.room).emit("userLeft", {
+        username: user.username,
+        message: `${user.username} left the chat`,
+      });
+
+      users.delete(socket.id);
+      connectionCount--;
+
+      // Update room users
+      const roomUsers = Array.from(users.values())
+        .filter((u) => u.room === user.room)
+        .map((u) => u.username);
+
+      io.to(user.room).emit("roomUsers", roomUsers);
+    }
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Chat server running on port ${PORT}`);
+});

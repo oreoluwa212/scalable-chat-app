@@ -1,0 +1,26 @@
+extends layout
+
+block content
+  .container
+    .header
+      h1 Node.js Scalable Chat Application
+      #stats.stats Loading...
+
+    #chatArea.chat-area
+
+    .users-list
+      strong Online Users: 
+      span#usersList -
+
+    .input-area
+      input#usernameInput(type='text' placeholder='Enter your username')
+      button(onclick='joinChat()') Join Chat
+
+    #messageArea.input-area(style='display: none;')
+      input#messageInput(type='text' placeholder='Type a message...')
+      button(onclick='sendMessage()') Send
+
+    #typingIndicator.typing
+
+  script(src='/socket.io/socket.io.js')
+  script(src='/javascripts/script.js')

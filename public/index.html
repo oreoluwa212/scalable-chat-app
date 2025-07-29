@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scalable Chat App - Node.js Demo</title>
+    <link rel="stylesheet" href="./stylesheets/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Node.js Scalable Chat Application</h1>
+        <div class="stats" id="stats">Loading...</div>
+      </div>
+
+      <div class="chat-area" id="chatArea"></div>
+
+      <div class="users-list">
+        <strong>Online Users:</strong> <span id="usersList">-</span>
+      </div>
+
+      <div class="input-area">
+        <input
+          type="text"
+          id="usernameInput"
+          placeholder="Enter your username"
+        />
+        <button onclick="joinChat()">Join Chat</button>
+      </div>
+
+      <div class="input-area" id="messageArea" style="display: none">
+        <input type="text" id="messageInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+
+      <div id="typingIndicator" class="typing"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./javascripts/script.js"></script>
+  </body>
+</html>
