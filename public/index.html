@@ -13,30 +13,113 @@
         <div class="stats" id="stats">Loading...</div>
       </div>
 
-      <div class="chat-area" id="chatArea"></div>
-
-      <div class="users-list">
-        <strong>Online Users:</strong> <span id="usersList">-</span>
+      <!-- Login Area -->
+      <div id="loginArea" class="login-area">
+        <h3>Join the Chat</h3>
+        <div class="input-group">
+          <input
+            type="text"
+            id="usernameInput"
+            placeholder="Enter your username"
+            maxlength="20"
+          />
+        </div>
+        <div class="input-group">
+          <select id="roomSelect">
+            <option value="general">General (Loading...)</option>
+          </select>
+        </div>
+        <button onclick="joinChat()" class="join-btn">Join Chat</button>
       </div>
 
-      <div class="input-area">
-        <input
-          type="text"
-          id="usernameInput"
-          placeholder="Enter your username"
-        />
-        <button onclick="joinChat()">Join Chat</button>
+      <!-- Chat Interface -->
+      <div id="chatInterface" class="chat-interface" style="display: none">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-header">
+            <h4>Rooms</h4>
+            <button
+              onclick="createRoom()"
+              class="create-room-btn"
+              title="Create Room"
+            >
+              +
+            </button>
+          </div>
+          <div id="roomsList" class="rooms-list"></div>
+          <button onclick="refreshRooms()" class="refresh-btn">
+            Refresh Rooms
+          </button>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-chat">
+          <div class="chat-header">
+            <h3>Room: <span id="currentRoom">general</span></h3>
+            <div class="users-info">
+              <strong>Online:</strong> <span id="usersList">-</span>
+            </div>
+          </div>
+
+          <div class="chat-area" id="chatArea"></div>
+
+          <div id="typingIndicator" class="typing"></div>
+
+          <div class="input-area">
+            <input
+              type="text"
+              id="messageInput"
+              placeholder="Type a message..."
+              maxlength="500"
+            />
+            <button onclick="sendMessage()">Send</button>
+          </div>
+        </div>
       </div>
 
-      <div class="input-area" id="messageArea" style="display: none">
-        <input type="text" id="messageInput" placeholder="Type a message..." />
-        <button onclick="sendMessage()">Send</button>
+      <!-- Create Room Modal -->
+      <div id="createRoomModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4>Create New Room</h4>
+            <span class="close" onclick="closeCreateRoomModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="input-group">
+              <label>Room ID (required):</label>
+              <input
+                type="text"
+                id="newRoomId"
+                placeholder="e.g., tech-discussion"
+                maxlength="30"
+              />
+              <small
+                >Lowercase, no spaces. Will be converted automatically.</small
+              >
+            </div>
+            <div class="input-group">
+              <label>Display Name (optional):</label>
+              <input
+                type="text"
+                id="newRoomName"
+                placeholder="e.g., Tech Discussion"
+                maxlength="50"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button onclick="closeCreateRoomModal()" class="cancel-btn">
+              Cancel
+            </button>
+            <button onclick="submitCreateRoom()" class="create-btn">
+              Create Room
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div id="typingIndicator" class="typing"></div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="/config/socket.js"></script>
     <script src="./javascripts/script.js"></script>
   </body>
 </html>

@@ -1,123 +1,100 @@
 #!/usr/bin/env node
 
-const express = require("express");
-const http = require("http");
-const path = require("path");
+/**
+ * Module dependencies.
+ */
 
-// Create Express app
-const app = express();
+var app = require('../server');
+var debug = require('debug')('scalable-chat-app:server');
+var http = require('http');
+var configureSocket = require('../config/socket');
 
-// Middleware
-app.use(express.static(path.join(__dirname, "..", "public")));
-app.use(express.json());
+/**
+ * Get port from environment and store in Express.
+ */
 
-// Basic route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "views", "index.html"));
-});
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
 
-// Stats API route
-app.get("/api/stats", (req, res) => {
-  res.json({
-    activeConnections: 0,
-    totalMessages: 0,
-    activeRooms: 0,
-    uptime: process.uptime(),
-  });
-});
+/**
+ * Create HTTP server.
+ */
 
-// Create HTTP server
-const server = http.createServer(app);
+var server = http.createServer(app);
 
-// Setup Socket.io
-const socketIo = require("socket.io");
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
+/**
+ * Initialize Socket.IO
+ */
+configureSocket(server);
 
-// Simple in-memory storage
-const users = new Map();
-const messages = [];
-let connectionCount = 0;
+/**
+ * Listen on provided port, on all network interfaces.
+ */
 
-// Socket.io events
-io.on("connection", (socket) => {
-  console.log(`New connection: ${socket.id}`);
-  connectionCount++;
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
 
-  socket.on("join", (data) => {
-    const { username, room = "general" } = data;
-    console.log(`${username} joining ${room}`);
+/**
+ * Normalize a port into a number, string, or false.
+ */
 
-    users.set(socket.id, { username, room });
-    socket.join(room);
+function normalizePort(val) {
+  var port = parseInt(val, 10);
 
-    socket.to(room).emit("userJoined", {
-      username,
-      message: `${username} joined the chat`,
-      timestamp: new Date().toISOString(),
-    });
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
 
-    // Send room users
-    const roomUsers = Array.from(users.values())
-      .filter((user) => user.room === room)
-      .map((user) => user.username);
+  if (port >= 0) {
+    // port number
+    return port;
+  }
 
-    io.to(room).emit("roomUsers", roomUsers);
-  });
+  return false;
+}
 
-  socket.on("message", (data) => {
-    const user = users.get(socket.id);
-    if (!user) return;
+/**
+ * Event listener for HTTP server "error" event.
+ */
 
-    const message = {
-      id: Date.now() + Math.random(),
-      username: user.username,
-      message: data.message,
-      room: user.room,
-      timestamp: new Date().toISOString(),
-    };
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
 
-    messages.push(message);
-    io.to(user.room).emit("message", message);
-  });
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
 
-  socket.on("typing", (isTyping) => {
-    const user = users.get(socket.id);
-    if (!user) return;
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
 
-    socket.to(user.room).emit("userTyping", {
-      username: user.username,
-      isTyping,
-    });
-  });
+/**
+ * Event listener for HTTP server "listening" event.
+ */
 
-  socket.on("disconnect", () => {
-    const user = users.get(socket.id);
-    if (user) {
-      socket.to(user.room).emit("userLeft", {
-        username: user.username,
-        message: `${user.username} left the chat`,
-      });
-
-      users.delete(socket.id);
-      connectionCount--;
-
-      // Update room users
-      const roomUsers = Array.from(users.values())
-        .filter((u) => u.room === user.room)
-        .map((u) => u.username);
-
-      io.to(user.room).emit("roomUsers", roomUsers);
-    }
-  });
-});
-
-// Start server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Chat server running on port ${PORT}`);
-});
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  
+  console.log('🚀 Scalable Chat Server listening on ' + bind);
+  console.log('📱 Access the application at http://localhost:' + addr.port);
+  console.log('🏠 Room management features now available!');
+  debug('Listening on ' + bind);
+}
