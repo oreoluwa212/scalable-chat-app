@@ -4,39 +4,185 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scalable Chat App - Node.js Demo</title>
-    <link rel="stylesheet" href="./stylesheets/style.css" />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
   </head>
   <body>
     <div class="container">
       <div class="header">
         <h1>Node.js Scalable Chat Application</h1>
-        <div class="stats" id="stats">Loading...</div>
+        <div class="auth-header">
+          <div class="stats" id="stats">Loading...</div>
+          <div id="authControls" class="auth-controls">
+            <button onclick="showAuthModal('login')" class="auth-btn">
+              Login
+            </button>
+            <button onclick="showAuthModal('register')" class="auth-btn">
+              Register
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div class="chat-area" id="chatArea"></div>
-
-      <div class="users-list">
-        <strong>Online Users:</strong> <span id="usersList">-</span>
+      <!-- Login Area -->
+      <div id="loginArea" class="login-area">
+        <h3>Join the Chat</h3>
+        <div class="input-group">
+          <input
+            type="text"
+            id="usernameInput"
+            placeholder="Enter your username (or login above)"
+            maxlength="20"
+          />
+        </div>
+        <button onclick="joinChat()" class="join-btn">Join Chat</button>
+        <p class="auth-note">
+          💡 <strong>Tip:</strong> Login for persistent profile, avatar, and
+          message history!
+        </p>
       </div>
 
-      <div class="input-area">
-        <input
-          type="text"
-          id="usernameInput"
-          placeholder="Enter your username"
-        />
-        <button onclick="joinChat()">Join Chat</button>
+      <!-- Chat Area -->
+      <div id="chatArea" class="chat-area" style="display: none">
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="users-list">
+          <strong>Online Users:</strong> <span id="usersList">-</span>
+        </div>
+
+        <div id="typingIndicator" class="typing"></div>
+
+        <div class="input-area">
+          <input
+            type="text"
+            id="messageInput"
+            placeholder="Type a message..."
+            maxlength="500"
+          />
+          <button onclick="sendMessage()">Send</button>
+        </div>
       </div>
 
-      <div class="input-area" id="messageArea" style="display: none">
-        <input type="text" id="messageInput" placeholder="Type a message..." />
-        <button onclick="sendMessage()">Send</button>
+      <!-- Authentication Modal -->
+      <div id="authModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 id="authMode">Login</h4>
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="authForm" data-mode="login">
+              <div class="input-group">
+                <label>Username or Email:</label>
+                <input
+                  type="text"
+                  id="emailOrUsername"
+                  placeholder="Enter username or email"
+                  required
+                />
+              </div>
+              <div class="input-group" id="emailField" style="display: none">
+                <label>Email:</label>
+                <input type="email" id="email" placeholder="Enter your email" />
+              </div>
+              <div class="input-group">
+                <label>Password:</label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="Enter password"
+                  required
+                  minlength="6"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button onclick="closeAuthModal()" class="cancel-btn">
+              Cancel
+            </button>
+            <button onclick="submitAuth()" class="auth-submit-btn">
+              Submit
+            </button>
+            <div class="auth-switch">
+              <a
+                href="#"
+                onclick="showAuthModal('register')"
+                id="switchToRegister"
+                >Need an account? Register</a
+              >
+              <a
+                href="#"
+                onclick="showAuthModal('login')"
+                id="switchToLogin"
+                style="display: none"
+                >Have an account? Login</a
+              >
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div id="typingIndicator" class="typing"></div>
+      <!-- Profile Modal -->
+      <div id="profileModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4>User Profile</h4>
+            <span class="close" onclick="closeProfileModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="profile-info">
+              <div class="profile-row">
+                <label>Username:</label>
+                <span id="profileUsername">-</span>
+              </div>
+              <div class="profile-row">
+                <label>Email:</label>
+                <span id="profileEmail">-</span>
+              </div>
+              <div class="profile-row">
+                <label>Member since:</label>
+                <span id="profileJoined">-</span>
+              </div>
+              <div class="profile-row">
+                <label>Total messages:</label>
+                <span id="profileMessages">-</span>
+              </div>
+            </div>
+
+            <div class="profile-edit">
+              <h5>Edit Profile</h5>
+              <div class="input-group">
+                <label>Bio:</label>
+                <textarea
+                  id="profileBio"
+                  placeholder="Tell us about yourself..."
+                  maxlength="200"
+                ></textarea>
+              </div>
+              <div class="input-group">
+                <label>Avatar URL:</label>
+                <input
+                  type="url"
+                  id="profileAvatar"
+                  placeholder="https://example.com/avatar.jpg"
+                />
+                <small>Enter a URL to your profile picture</small>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button onclick="closeProfileModal()" class="cancel-btn">
+              Cancel
+            </button>
+            <button onclick="updateProfile()" class="save-btn">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="./javascripts/script.js"></script>
+    <script src="/config/socket.js"></script>
+    <script src="/public/javascripts/script.js"></script>
   </body>
 </html>
